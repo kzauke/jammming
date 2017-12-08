@@ -9,8 +9,8 @@ const apiURL = 'https://api.spotify.com/v1';
 
 const scopes = 'playlist-modify-public';
 
-let accessToken = '';
-let expiry = '';
+let accessToken;
+let expiry;
 
 const Spotify = {
 	getAccessToken() {
@@ -37,16 +37,16 @@ const Spotify = {
 			}
 		}
 		
-		return new Promise(resolve => resolve(accessToken));
+		return accessToken;
 	},
 
 	search(term) {
+
+		const accessToken = Spotify.getAccessToken();
 		const url = `${corsURL}/${apiURL}/search?type=track&q=${term}`;
 
-		return Spotify.getAccessToken().then(() => {
-			return fetch(url, {
-				headers: { Authorization: `Bearer ${accessToken}` },
-			});
+		return fetch(url, {
+			headers: { Authorization: `Bearer ${accessToken}` },
 		})
 		.then(response => response.json())
 		.then(jsonResponse => {
@@ -67,34 +67,36 @@ const Spotify = {
 		})
 	},
 
-	savePlaylist(playlistName, Tracks) {
-		//const accessToken = Spotify.getAccessToken();
+	savePlaylist(playlistName, tracks) {
+		const accessToken = Spotify.getAccessToken();
+
+		const headers = {
+			Authorization: `Bearer ${accessToken}`, 
+			'Content-Type': 'application/json' 
+		}
 
 		//get user id from spotify api
 		fetch(`${apiURL}/me`, {
-				headers: { Authorization: `Bearer ${accessToken}` },
+				headers: headers
 		})
 		.then(response => response.json())
-		.then(jsonResponse => {
-			console.log(jsonResponse);
-			return jsonResponse.id
-		})
+		.then(jsonResponse => jsonResponse.id)
 		.then(userID => {
 			return fetch(`${corsURL}/${apiURL}/users/${userID}/playlists`, {
 				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${accessToken}`, 
-					'Content-Type': 'application/json' 
-				},
-				body: JSON.stringify({ name: 'JammmingPlaylist' })
+				headers: headers,
+				body: JSON.stringify({ name: playlistName })
 			})
 		})
 		.then(response => response.json())
 		.then(jsonResponse => jsonResponse.id)
-		.then(playlistID => console.log(playlistID))
-
-		//add tracks to playlist
-
+		.then(playlistID => {
+			return fetch(`${corsURL}/${apiURL}/playlists/${playlistID}/tracks`, {
+				method: 'POST',
+				headers: headers,
+				body: JSON.stringify({ "uris" : tracks })
+			})
+		})
 	}
 }
 

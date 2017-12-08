@@ -23,6 +23,7 @@ class App extends Component {
     this.search = this.search.bind(this);
   }
 
+
   addTrack(track) {
     if (!this.state.playlistTracks.find(x => x.id === track.id)) {
       this.state.playlistTracks.push(track);
@@ -43,9 +44,14 @@ class App extends Component {
   }
 
   savePlaylist() {
-    Spotify.savePlaylist()
-    // let trackURIs = Array.from(this.state.playlistTracks, x => x.uri);
-    // console.log(trackURIs);
+    let playlistName = this.state.playlistName;
+    let tracks = Array.from(this.state.playlistTracks, x => x.uri);
+
+    Spotify.savePlaylist(playlistName, tracks)
+    this.setState({
+      playlistTracks: [],
+      playlistName: 'New Playlist'
+    })
   }
 
   search(searchTerm) {
